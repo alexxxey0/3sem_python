@@ -56,17 +56,40 @@ def main():
     clock = pg.time.Clock()
     run = True
     state = "title" # initial state of the game (title screen)
-    grid_created = False
     buttons = []
 
     ships_placed = 0
     ship_selected = False
 
+    # ships - 10x10 matrix that represents the placement of the ships (contains numbers 0 and 1)
+    # grid - 10x10 matrix that represents the visual state of the grid (contains grid square objects)
+
+    # Define a 10x10 matrix, that will represent placed ships (1 - ship, 0 - no ship)
     ships = []
     for i in range(10):
         ships.append([])
         for j in range(10):
             ships[i].append(0)
+
+    # Define the grid
+    grid = []
+    x, y = 350, 150
+    for i in range(10):
+        grid.append([])
+        for j in range(10):
+            rect = pg.Rect(x, y, 50, 50)
+            '''
+                each square is represented by an object with the following properties:
+                rect - the rect object associated with the square
+                color - the color of the square
+                width - outline thickness (0 to fill completely)
+                i - i coordinate [0-9] (0,0 is the top left corner)
+                j - j coordinate [0-9]
+            '''
+            grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
+            x += 50
+        y += 50
+        x -= 500
 
     while run:
         clock.tick(FPS)
@@ -218,22 +241,6 @@ def main():
             if reset_border not in buttons:
                 buttons.append(reset_border)
 
-
-
-            if not grid_created:
-                # Create the grid
-                grid = []
-                x, y = 350, 150
-
-                for i in range(10):
-                    grid.append([])
-                    for j in range(10):
-                        rect = pg.Rect(x, y, 50, 50)
-                        grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
-                        x += 50
-                    y += 50
-                    x -= 500
-                grid_created = True
 
             # Draw the grid
             for row in grid:
