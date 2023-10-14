@@ -139,41 +139,55 @@ def main():
                                                 ships[square["i"]][j] = 1
 
                                         ships_placed += 1
-
+                                    
+                        print(ships_placed)
+                        if ships_placed == 10:
+                            confirm_border = pg.Rect(0, 0, 150, 100)
+                            confirm_border.center = (1025, 600)
+                            pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
+                            confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
+                            confirm_text_center = confirm_text.get_rect(center = (1025, 600))
+                            WIN.blit(confirm_text, confirm_text_center)
+                            if confirm_border not in buttons:
+                                buttons.append(confirm_border)
+                        
                         if reset_border.collidepoint(event.pos):
+                            WIN.fill(BLACK)
                             ships_placed = 0
                             ship_selected = False
                             clear_board(grid)
 
                             if "confirm_border" in locals():
                                 if confirm_border in buttons:
+                                    print(buttons)
                                     buttons.remove(confirm_border)
+                                    print(buttons)
 
                             ships = clear_ships(ships)
 
+
                         if "confirm_border" in locals():
                             if confirm_border.collidepoint(event.pos):
+                                WIN.fill(BLACK)
                                 if confirm_border in buttons:
                                     buttons.remove(confirm_border)
 
-                                if state == "player1_ships":
-                                    state = "player2_ships"
-                                    clear_board(grid)
-                                    p1_ships = ships
-                                elif state == "player2_ships":
-                                    state = "game"
-                                    clear_board(grid)
-                                    p2_ships = ships
+                                    if state == "player1_ships":
+                                        state = "player2_ships"
+                                        clear_board(grid)
+                                        p1_ships = ships
+                                    elif state == "player2_ships":
+                                        state = "game"
+                                        clear_board(grid)
+                                        p2_ships = ships
 
-                                ships_placed = 0
-                                ship_selected = False
-                                ships = clear_ships(ships)
+                                    ships_placed = 0
+                                    ship_selected = False
+                                    ships = clear_ships(ships)
 
         
         
         # Drawing stuff
-        WIN.fill(BLACK)
-        
         if state == "title":
             # Welcome text and start button
             welcome_text = pixeloid(60).render("EPIC BATTLESHIP", True, NEON_GREEN)
@@ -221,28 +235,18 @@ def main():
                     x -= 500
                 grid_created = True
 
-            if ships_placed == 10:
-                confirm_border = pg.Rect(0, 0, 150, 100)
-                confirm_border.center = (1025, 600)
-                pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
-                confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
-                confirm_text_center = confirm_text.get_rect(center = (1025, 600))
-                WIN.blit(confirm_text, confirm_text_center)
-                if confirm_border not in buttons:
-                    buttons.append(confirm_border)
-
             # Draw the grid
             for row in grid:
                 for square in row:
                     pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
 
-            for button in buttons:
-                if button.collidepoint(pg.mouse.get_pos()):
-                    pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
-                    break
-                else:
-                    pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
+        for button in buttons:
+            if button.collidepoint(pg.mouse.get_pos()):
+                pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
+                break
+            else:
+                pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
         pg.display.update()
 
