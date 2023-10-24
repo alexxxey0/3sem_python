@@ -47,19 +47,19 @@ def clear_red_squares(grid):
 
 
 # function that takes a dictionary with player's hits and checks if any ship is fully destroyed. If so, marks it as destroyed
-def check_if_destroyed(hits):
-    for key, value in hits.items():
+def check_if_destroyed(ship_hits):
+    for key, value in ship_hits.items():
         if key == "ship4" and value == 4:
-            hits[key] = "destroyed"
+            ship_hits[key] = "destroyed"
             return key # return the ship which is destroyed
         elif key in ("ship3_1", "ship3_2") and value == 3:
-            hits[key] = "destroyed"
+            ship_hits[key] = "destroyed"
             return key
         elif key in ("ship2_1", "ship2_2", "ship2_3") and value == 2:
-            hits[key] = "destroyed"
+            ship_hits[key] = "destroyed"
             return key
         elif key in ("ship1_1", "ship1_2", "ship1_3", "ship1_4") and value == 1:
-            hits[key] = "destroyed"
+            ship_hits[key] = "destroyed"
             return key
         
     return False

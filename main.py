@@ -26,14 +26,15 @@ ship_selected = False
 # ships - 10x10 matrix that represents the placement of the ships (contains numbers 0 and 1)
 # grid - 10x10 matrix that represents the visual state of the grid (contains grid square objects)
 
-# Define a 10x10 matrix, that will represent placed ships (1 - ship, 0 - no ship)
+# Define a 10x10 matrix, that will represent placed ships
 ships = []
 for i in range(10):
     ships.append([])
     for j in range(10):
         ships[i].append(0)
 
-p1_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'ship3_1', 0],
+# for testing
+'''p1_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'ship3_1', 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
                         ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
@@ -53,7 +54,8 @@ p2_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'sh
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                         ['ship1_1', 0, 'ship1_2', 0, 'ship1_3', 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0, 0, 0, 'ship1_4', 0]] 
+                        [0, 0, 0, 0, 0, 0, 0, 0, 'ship1_4', 0]]'''
+
 # Define the grid for players to place their ships
 grid = []
 x, y = 350, 150
@@ -101,7 +103,7 @@ for player_grid in grids:
     x += 600
     y = 100
 
-# Information about players' hits at bigger ships (necessary to tell if ship is fully destroyed)
+# Information about players' hits (necessary to tell if a ship is fully destroyed)
 p1_ship_hits = {"ship4": 0,
            "ship3_1": 0,
            "ship3_2": 0,
@@ -136,18 +138,16 @@ ship_names = {
     3: "ship3_2",
     4: "ship2_1",
     5: "ship2_2",
-    6: "ship3_2",
-    7: "ship4_1",
-    8: "ship4_2",
-    9: "ship4_3",
-    10: "ship4_4"
+    6: "ship2_3",
+    7: "ship1_1",
+    8: "ship1_2",
+    9: "ship1_3",
+    10: "ship1_4"
 }
 
 
-
-
-#tab = "start" # starting tab
-tab = "player1_move"
+tab = "start" # starting tab
+#tab = "player1_move"
 while run:
     clock.tick(FPS)
 
@@ -309,11 +309,11 @@ while run:
                             if tab == "player1_ships":
                                 tab = "player2_ships"
                                 clear_board(grid)
-                                #p1_ships = ships
+                                p1_ships = ships
                             elif tab == "player2_ships":
                                 tab = "player1_move"
                                 clear_board(grid)
-                                #p2_ships = ships
+                                p2_ships = ships
                                 buttons.remove(reset_border)
 
                             ships_placed = 0
@@ -348,7 +348,7 @@ while run:
         if p1_hits == 20:
             print("Player 1 won!")
             run = False
-        if p2_hits == 20:
+        elif p2_hits == 20:
             print("Player 2 won!")
             run = False
 
@@ -366,8 +366,11 @@ while run:
                 for row in p2_grid:
                     for square in row:
                         if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
+                            print(p1_ship_hits)
+                            print()
+                            print(p2_ships)
 
-                            if p2_ships[square["i"]][square["j"]] != 0: # length 2+ ships
+                            if p2_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
                                 p1_ship_hits[p2_ships[square["i"]][square["j"]]] += 1
                                 p1_hits += 1
@@ -395,7 +398,7 @@ while run:
                     for square in row:
                         if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
 
-                            if p1_ships[square["i"]][square["j"]] != 0: # length 2+ ships
+                            if p1_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
                                 p2_ship_hits[p1_ships[square["i"]][square["j"]]] += 1
                                 p2_hits += 1
@@ -430,7 +433,3 @@ while run:
     pg.display.update()
 
 pg.quit()
-
-
-
-
