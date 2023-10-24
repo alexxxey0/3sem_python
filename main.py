@@ -33,7 +33,18 @@ for i in range(10):
     for j in range(10):
         ships[i].append(0)
 
-# Define the grid
+p1_ships = p2_ships = [[1,1,1,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [1,1,1,0,0,0,0,1,1,1],
+            [0,0,0,0,0,0,0,0,0,0],
+            [1,1,0,0,1,1,0,0,1,1],
+            [0,0,0,0,0,0,0,0,0,0],
+            [1,0,1,0,1,0,1,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0]]
+
+# Define the grid for players to place their ships
 grid = []
 x, y = 350, 150
 for i in range(10):
@@ -54,6 +65,7 @@ for i in range(10):
     x -= 500
 
 
+# Define the grids for players to attack
 p1_grid = []
 p2_grid = []
 grids = [p1_grid, p2_grid]
@@ -81,8 +93,8 @@ for player_grid in grids:
 
 
 
-tab = "start" # starting tab
-#tab = "player1_move"
+#tab = "start" # starting tab
+tab = "player1_move"
 while run:
     clock.tick(FPS)
 
@@ -148,118 +160,117 @@ while run:
                 print(numpy.matrix(p2_ships))
                 run = False
 
-            if event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    if not ship_selected and ships_placed < 6:
-                        '''
-                            if the player clicks a square, and a ship is not currently selected,
-                            fill the square with green and mark possible choices for ship placement with red
-                            (for 1x1 ships, the player selects only 1 square, so we skip this step)
-                        '''
-                        for row in grid:
-                            for square in row:
-                                if square["rect"].collidepoint(event.pos) and valid_square(square, ships):
-                                    square_selected = {"i": square["i"], "j": square["j"]}
-                                    square["width"] = 0
-                                    ship_selected = True
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                if not ship_selected and ships_placed < 6:
+                    '''
+                        if the player clicks a square, and a ship is not currently selected,
+                        fill the square with green and mark possible choices for ship placement with red
+                        (for 1x1 ships, the player selects only 1 square, so we skip this step)
+                    '''
+                    for row in grid:
+                        for square in row:
+                            if square["rect"].collidepoint(event.pos) and valid_square(square, ships):
+                                square_selected = {"i": square["i"], "j": square["j"]}
+                                square["width"] = 0
+                                ship_selected = True
 
-                                    if ships_placed < 1:
-                                        offset = 3
-                                    elif ships_placed < 3:
-                                        offset = 2
-                                    elif ships_placed < 6: 
-                                        offset = 1
+                                if ships_placed < 1:
+                                    offset = 3
+                                elif ships_placed < 3:
+                                    offset = 2
+                                elif ships_placed < 6: 
+                                    offset = 1
 
-                                    if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships):
-                                        grid[square["i"] - offset][square["j"]]["color"] = RED
-                                    if square["i"] <= 9 - offset and valid_square(grid[square["i"] + offset][square["j"]], ships):
-                                        grid[square["i"] + offset][square["j"]]["color"] = RED
-                                    if square["j"] >= offset and valid_square(grid[square["i"]][square["j"] - offset], ships):
-                                        grid[square["i"]][square["j"] - offset]["color"] = RED
-                                    if square["j"] <= 9 - offset and valid_square(grid[square["i"]][square["j"] +  offset], ships):
-                                        grid[square["i"]][square["j"] +  offset]["color"] = RED
+                                if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships):
+                                    grid[square["i"] - offset][square["j"]]["color"] = RED
+                                if square["i"] <= 9 - offset and valid_square(grid[square["i"] + offset][square["j"]], ships):
+                                    grid[square["i"] + offset][square["j"]]["color"] = RED
+                                if square["j"] >= offset and valid_square(grid[square["i"]][square["j"] - offset], ships):
+                                    grid[square["i"]][square["j"] - offset]["color"] = RED
+                                if square["j"] <= 9 - offset and valid_square(grid[square["i"]][square["j"] +  offset], ships):
+                                    grid[square["i"]][square["j"] +  offset]["color"] = RED
 
 
-                    elif ships_placed < 10:
-                        '''
-                            if the player clicks a square, and a ship is currently selected,
-                            fill the selected square, as well as all the squares in between with green (thus, drawing the whole ship)
-                        '''
-                        for row in grid:
-                            for square in row:
-                                if square["rect"].collidepoint(event.pos) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships):
-                                    square["color"] = NEON_GREEN
-                                    square["width"] = 0
-                                    ship_selected = False
-                                    clear_red_squares(grid)
-
-                                    if ships_placed >= 6:
-                                        square_selected["i"] = square["i"]
-                                        square_selected["j"] = square["j"]
-
-                                    
-                                    '''
-                                        at this point the player has confirmed both the start and end points of the ship, so we do 2 things:
-                                        1) fill the squares between the ones player has selected with green (thus, displaying the ship properly)
-                                        2) add the ship to the 'ships' matrix
-                                    '''
-                                    if square["i"] != square_selected["i"]:
-                                        for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
-                                            grid[i][square["j"]]["width"] = 0
-                                            ships[i][square["j"]] = 1
-                                    else:
-                                        for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
-                                            grid[square["i"]][j]["width"] = 0
-                                            ships[square["i"]][j] = 1
-
-                                    ships_placed += 1
-                                
-                    # if the player has placed all 10 ships, display the confirm button
-                    if ships_placed == 10:
-                        confirm_border = pg.Rect(0, 0, 150, 100)
-                        confirm_border.center = (1025, 600)
-                        pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
-                        confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
-                        confirm_text_center = confirm_text.get_rect(center = (1025, 600))
-                        WIN.blit(confirm_text, confirm_text_center)
-                        if confirm_border not in buttons:
-                            buttons.append(confirm_border)
-                    
-                    # if player clicks reset, reset everything back to default
-                    if reset_border.collidepoint(event.pos):
-                        WIN.fill(BLACK)
-                        ships_placed = 0
-                        ship_selected = False
-                        clear_board(grid)
-
-                        if "confirm_border" in locals():
-                            if confirm_border in buttons:
-                                buttons.remove(confirm_border)
-
-                        ships = clear_ships(ships)
-
-                    # if player clicks confirm, save the ships matrix into a variable (p1_ships for player 1, p2_ships for player 2)
-                    # as a result, we get 2 10x10 matrices, which represent the placement of players' ships
-                    if "confirm_border" in locals():
-                        if confirm_border.collidepoint(event.pos):
-                            WIN.fill(BLACK)
-                            if confirm_border in buttons:
-                                buttons.remove(confirm_border)
-
-                                if tab == "player1_ships":
-                                    tab = "player2_ships"
-                                    clear_board(grid)
-                                    p1_ships = ships
-                                elif tab == "player2_ships":
-                                    tab = "player1_move"
-                                    clear_board(grid)
-                                    p2_ships = ships
-                                    buttons.remove(reset_border)
-                                    print(buttons)
-
-                                ships_placed = 0
+                elif ships_placed < 10:
+                    '''
+                        if the player clicks a square, and a ship is currently selected,
+                        fill the selected square, as well as all the squares in between with green (thus, drawing the whole ship)
+                    '''
+                    for row in grid:
+                        for square in row:
+                            if square["rect"].collidepoint(event.pos) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships):
+                                square["color"] = NEON_GREEN
+                                square["width"] = 0
                                 ship_selected = False
-                                ships = clear_ships(ships)
+                                clear_red_squares(grid)
+
+                                if ships_placed >= 6:
+                                    square_selected["i"] = square["i"]
+                                    square_selected["j"] = square["j"]
+
+                                
+                                '''
+                                    at this point the player has confirmed both the start and end points of the ship, so we do 2 things:
+                                    1) fill the squares between the ones player has selected with green (thus, displaying the ship properly)
+                                    2) add the ship to the 'ships' matrix
+                                '''
+                                if square["i"] != square_selected["i"]:
+                                    for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
+                                        grid[i][square["j"]]["width"] = 0
+                                        ships[i][square["j"]] = 1
+                                else:
+                                    for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
+                                        grid[square["i"]][j]["width"] = 0
+                                        ships[square["i"]][j] = 1
+
+                                ships_placed += 1
+                            
+                # if the player has placed all 10 ships, display the confirm button
+                if ships_placed == 10:
+                    confirm_border = pg.Rect(0, 0, 150, 100)
+                    confirm_border.center = (1025, 600)
+                    pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
+                    confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
+                    confirm_text_center = confirm_text.get_rect(center = (1025, 600))
+                    WIN.blit(confirm_text, confirm_text_center)
+                    if confirm_border not in buttons:
+                        buttons.append(confirm_border)
+                
+                # if player clicks reset, reset everything back to default
+                if reset_border.collidepoint(event.pos):
+                    WIN.fill(BLACK)
+                    ships_placed = 0
+                    ship_selected = False
+                    clear_board(grid)
+
+                    if "confirm_border" in locals():
+                        if confirm_border in buttons:
+                            buttons.remove(confirm_border)
+
+                    ships = clear_ships(ships)
+
+                # if player clicks confirm, save the ships matrix into a variable (p1_ships for player 1, p2_ships for player 2)
+                # as a result, we get 2 10x10 matrices, which represent the placement of players' ships
+                if "confirm_border" in locals():
+                    if confirm_border.collidepoint(event.pos):
+                        WIN.fill(BLACK)
+                        if confirm_border in buttons:
+                            buttons.remove(confirm_border)
+
+                            if tab == "player1_ships":
+                                tab = "player2_ships"
+                                clear_board(grid)
+                                #p1_ships = ships
+                            elif tab == "player2_ships":
+                                tab = "player1_move"
+                                clear_board(grid)
+                                #p2_ships = ships
+                                buttons.remove(reset_border)
+                                print(buttons)
+
+                            ships_placed = 0
+                            ship_selected = False
+                            ships = clear_ships(ships)
 
     elif tab == "player1_move" or tab == "player2_move":
         WIN.fill(BLACK)
@@ -283,6 +294,7 @@ while run:
                 for square in row:
                     pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
+
         # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -300,6 +312,17 @@ while run:
                                 square["width"] = 0
                             else:
                                 square["color"] = RED
+                                tab = "player2_move"
+                                
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab  == "player2_move":
+                for row in p1_grid:
+                    for square in row:
+                        if square["rect"].collidepoint(event.pos):
+                            if p1_ships[square["i"]][square["j"]] == 1:
+                                square["width"] = 0
+                            else:
+                                square["color"] = RED
+                                tab = "player1_move"
 
 
 

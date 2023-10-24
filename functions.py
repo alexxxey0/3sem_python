@@ -14,7 +14,7 @@ def valid_square(square, ships):
     for i in x:
         if square["i"] + i[0] in out or square["j"] + i[1] in out:
             continue
-        if ships[square["i"] + i[0]][square["j"] + i[1]] == 1:
+        if ships[square["i"] + i[0]][square["j"] + i[1]] != 0:
             return False
     return True
 
