@@ -26,23 +26,35 @@ ship_selected = False
 # ships - 10x10 matrix that represents the placement of the ships (contains numbers 0 and 1)
 # grid - 10x10 matrix that represents the visual state of the grid (contains grid square objects)
 
-# Define a 10x10 matrix, that will represent placed ships (1 - ship, 0 - no ship)
+# Define a 10x10 matrix, that will represent placed ships
 ships = []
 for i in range(10):
     ships.append([])
     for j in range(10):
         ships[i].append(0)
 
-'''p1_ships = p2_ships = [[1,1,1,1,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0],
-            [1,1,1,0,0,0,0,1,1,1],
-            [0,0,0,0,0,0,0,0,0,0],
-            [1,1,0,0,1,1,0,0,1,1],
-            [0,0,0,0,0,0,0,0,0,0],
-            [1,0,1,0,1,0,1,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0]]'''
+# for testing
+'''p1_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'ship3_1', 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
+                        ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
+                        ['ship3_2', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        ['ship1_1', 0, 'ship1_2', 0, 'ship1_3', 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 'ship1_4', 0]] 
+
+p2_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'ship3_1', 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
+                        ['ship3_2', 0, 0, 'ship2_1', 0, 0, 'ship2_2', 0, 0, 'ship2_3'],
+                        ['ship3_2', 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        ['ship1_1', 0, 'ship1_2', 0, 'ship1_3', 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 'ship1_4', 0]]'''
 
 # Define the grid for players to place their ships
 grid = []
@@ -91,6 +103,47 @@ for player_grid in grids:
     x += 600
     y = 100
 
+# Information about players' hits (necessary to tell if a ship is fully destroyed)
+p1_ship_hits = {"ship4": 0,
+           "ship3_1": 0,
+           "ship3_2": 0,
+           "ship2_1": 0,
+           "ship2_2": 0,
+           "ship2_3": 0,
+           "ship1_1": 0,
+           "ship1_2": 0,
+           "ship1_3": 0,
+           "ship1_4": 0
+           }
+
+p2_ship_hits = {"ship4": 0,
+           "ship3_1": 0,
+           "ship3_2": 0,
+           "ship2_1": 0,
+           "ship2_2": 0,
+           "ship2_3": 0,
+           "ship1_1": 0,
+           "ship1_2": 0,
+           "ship1_3": 0,
+           "ship1_4": 0
+           }
+
+# Information about players' total hits (destroying all ships == 20 hits)
+p1_hits = 0
+p2_hits = 0
+
+ship_names = {
+    1: "ship4",
+    2: "ship3_1",
+    3: "ship3_2",
+    4: "ship2_1",
+    5: "ship2_2",
+    6: "ship2_3",
+    7: "ship1_1",
+    8: "ship1_2",
+    9: "ship1_3",
+    10: "ship1_4"
+}
 
 
 tab = "start" # starting tab
@@ -116,10 +169,6 @@ while run:
         # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                print("P1")
-                print(numpy.matrix(p1_ships))
-                print("P2")
-                print(numpy.matrix(p2_ships))
                 run = False
         
             if event.type == pg.MOUSEBUTTONDOWN:
@@ -217,25 +266,11 @@ while run:
                                 if square["i"] != square_selected["i"]:
                                     for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
                                         grid[i][square["j"]]["width"] = 0
-                                        if ships_placed < 1:
-                                            ships[i][square["j"]] = 4
-                                        elif ships_placed < 3:
-                                            ships[i][square["j"]] = 3
-                                        elif ships_placed < 6:
-                                            ships[i][square["j"]] = 2
-                                        else:
-                                            ships[i][square["j"]] = 1
+                                        ships[i][square["j"]] = ship_names[ships_placed + 1]
                                 else:
                                     for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
                                         grid[square["i"]][j]["width"] = 0
-                                        if ships_placed < 1:
-                                            ships[square["i"]][j] = 4
-                                        elif ships_placed < 3:
-                                            ships[square["i"]][j] = 3
-                                        elif ships_placed < 6:
-                                            ships[square["i"]][j] = 2
-                                        else:
-                                            ships[square["i"]][j] = 1
+                                        ships[square["i"]][j] = ship_names[ships_placed + 1]
 
                                 ships_placed += 1
                             
@@ -280,11 +315,11 @@ while run:
                                 clear_board(grid)
                                 p2_ships = ships
                                 buttons.remove(reset_border)
-                                print(buttons)
 
                             ships_placed = 0
                             ship_selected = False
                             ships = clear_ships(ships)
+
 
     elif tab == "player1_move" or tab == "player2_move":
         WIN.fill(BLACK)
@@ -309,6 +344,14 @@ while run:
                     pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
 
+        # Checking winning condition
+        if p1_hits == 20:
+            print("Player 1 won!")
+            run = False
+        elif p2_hits == 20:
+            print("Player 2 won!")
+            run = False
+
         # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -318,22 +361,61 @@ while run:
                 print(numpy.matrix(p2_ships))
                 run = False
 
+            # Player 1 attacking
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab == "player1_move":
                 for row in p2_grid:
                     for square in row:
-                        if square["rect"].collidepoint(event.pos):
-                            if p2_ships[square["i"]][square["j"]] == 1:
+                        if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
+                            print(p1_ship_hits)
+                            print()
+                            print(p2_ships)
+
+                            if p2_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
+                                p1_ship_hits[p2_ships[square["i"]][square["j"]]] += 1
+                                p1_hits += 1
+                                destroyed_ship = check_if_destroyed(p1_ship_hits)
+
+                                if destroyed_ship:
+                                    x = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+                                    out = [-1, 10]
+                                    for row in p2_grid:
+                                        for square in row:
+                                            for i in x:
+                                                if square["i"] + i[0] in out or square["j"] + i[1] in out:
+                                                    continue
+                                                if p2_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p2_ships[square["i"]][square["j"]] == 0:
+                                                    square["color"] = RED
+                                                    break
+
                             else:
                                 square["color"] = RED
                                 tab = "player2_move"
 
+            # Player 2 attacking
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab  == "player2_move":
                 for row in p1_grid:
                     for square in row:
-                        if square["rect"].collidepoint(event.pos):
-                            if p1_ships[square["i"]][square["j"]] == 1:
+                        if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
+
+                            if p1_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
+                                p2_ship_hits[p1_ships[square["i"]][square["j"]]] += 1
+                                p2_hits += 1
+                                destroyed_ship = check_if_destroyed(p2_ship_hits)
+
+                                if destroyed_ship:
+                                    x = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+                                    out = [-1, 10]
+                                    for row in p1_grid:
+                                        for square in row:
+                                            for i in x:
+                                                if square["i"] + i[0] in out or square["j"] + i[1] in out:
+                                                    continue
+                                                if p1_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p1_ships[square["i"]][square["j"]] == 0:
+                                                    square["color"] = RED
+                                                    break
+
                             else:
                                 square["color"] = RED
                                 tab = "player1_move"
@@ -351,7 +433,3 @@ while run:
     pg.display.update()
 
 pg.quit()
-
-
-
-
