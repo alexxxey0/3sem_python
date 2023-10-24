@@ -54,6 +54,31 @@ for i in range(10):
     x -= 500
 
 
+p1_grid = []
+p2_grid = []
+grids = [p1_grid, p2_grid]
+x, y = 50, 100
+for player_grid in grids:
+    for i in range(10):
+        player_grid.append([])
+        for j in range(10):
+            rect = pg.Rect(x, y, 50, 50)
+            '''
+                each square is represented by an object with the following properties:
+                rect - the rect object associated with the square
+                color - the color of the square
+                width - outline thickness (0 to fill completely)
+                i - i coordinate [0-9] (0,0 is the top left corner)
+                j - j coordinate [0-9]
+            '''
+            player_grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
+            x += 50
+        y += 50
+        x -= 500
+
+    x += 600
+    y = 100
+
 
 
 tab = "start" # starting tab
@@ -229,6 +254,8 @@ while run:
                                     tab = "player1_move"
                                     clear_board(grid)
                                     p2_ships = ships
+                                    buttons.remove(reset_border)
+                                    print(buttons)
 
                                 ships_placed = 0
                                 ship_selected = False
@@ -236,42 +263,23 @@ while run:
 
     elif tab == "player1_move" or tab == "player2_move":
         WIN.fill(BLACK)
-
-        # Define the grids
-        p1_grid = []
-        p2_grid = []
-        grids = [p1_grid, p2_grid]
-        x, y = 50, 150
+        pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
         # Drawing
-        place_ships_text = "Player 1, make your move" if tab == "player1_move" else "Player 2, make your move"
+        place_ships_text = "Player 1, make your move ↓" if tab == "player1_move" else "↓ Player 2, make your move"
         welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
-        welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 100))
+        welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 50))
         WIN.blit(welcome_text, welcome_text_center)
 
+        p1_text = pixeloid(40).render("Player 1", True, NEON_GREEN)
+        p1_text_pos = p1_text.get_rect(center = (WIDTH / 4, 650))
+        WIN.blit(p1_text, p1_text_pos)
+        p2_text = pixeloid(40).render("Player 2", True, NEON_GREEN)
+        p2_text_pos = p2_text.get_rect(center = (WIDTH * 3 / 4, 650))
+        WIN.blit(p2_text, p2_text_pos)
 
-        for grid in grids:
-            for i in range(10):
-                grid.append([])
-                for j in range(10):
-                    rect = pg.Rect(x, y, 50, 50)
-                    '''
-                        each square is represented by an object with the following properties:
-                        rect - the rect object associated with the square
-                        color - the color of the square
-                        width - outline thickness (0 to fill completely)
-                        i - i coordinate [0-9] (0,0 is the top left corner)
-                        j - j coordinate [0-9]
-                    '''
-                    grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
-                    x += 50
-                y += 50
-                x -= 500
-
-            x += 600
-            y = 150
-
-            for row in grid:
+        for player_grid in grids:
+            for row in player_grid:
                 for square in row:
                     pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
@@ -283,6 +291,15 @@ while run:
                 print("P2")
                 print(numpy.matrix(p2_ships))
                 run = False
+
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab == "player1_move":
+                for row in p2_grid:
+                    for square in row:
+                        if square["rect"].collidepoint(event.pos):
+                            if p2_ships[square["i"]][square["j"]] == 1:
+                                square["width"] = 0
+                            else:
+                                square["color"] = RED
 
 
 
