@@ -53,12 +53,16 @@ for i in range(10):
     y += 50
     x -= 500
 
-tab = "main_menu"
+
+
+
+tab = "start" # starting tab
+#tab = "player1_move"
 while run:
     clock.tick(FPS)
 
-    if tab == "main_menu":
-        # Welcome text and start button
+    if tab == "start":
+        # Drawing
         welcome_text = pixeloid(60).render("EPIC BATTLESHIP", True, NEON_GREEN)
         welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 200))
         WIN.blit(welcome_text, welcome_text_center)
@@ -91,6 +95,7 @@ while run:
 
     
     elif tab == "player1_ships" or tab == "player2_ships":
+        # Drawing
         place_ships_text = "Player 1, place your ships" if tab == "player1_ships" else "Player 2, place your ships"
         welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
         welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 100))
@@ -105,11 +110,11 @@ while run:
         if reset_border not in buttons:
             buttons.append(reset_border)
 
-
-        # Draw the grid
         for row in grid:
             for square in row:
                 pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
+
+        # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 print("P1")
@@ -221,7 +226,7 @@ while run:
                                     clear_board(grid)
                                     p1_ships = ships
                                 elif tab == "player2_ships":
-                                    tab = "game"
+                                    tab = "player1_move"
                                     clear_board(grid)
                                     p2_ships = ships
 
@@ -229,9 +234,48 @@ while run:
                                 ship_selected = False
                                 ships = clear_ships(ships)
 
-    elif tab == "game":
+    elif tab == "player1_move" or tab == "player2_move":
         WIN.fill(BLACK)
 
+        # Define the grids
+        p1_grid = []
+        p2_grid = []
+        grids = [p1_grid, p2_grid]
+        x, y = 50, 150
+
+        # Drawing
+        place_ships_text = "Player 1, make your move" if tab == "player1_move" else "Player 2, make your move"
+        welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
+        welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 100))
+        WIN.blit(welcome_text, welcome_text_center)
+
+
+        for grid in grids:
+            for i in range(10):
+                grid.append([])
+                for j in range(10):
+                    rect = pg.Rect(x, y, 50, 50)
+                    '''
+                        each square is represented by an object with the following properties:
+                        rect - the rect object associated with the square
+                        color - the color of the square
+                        width - outline thickness (0 to fill completely)
+                        i - i coordinate [0-9] (0,0 is the top left corner)
+                        j - j coordinate [0-9]
+                    '''
+                    grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
+                    x += 50
+                y += 50
+                x -= 500
+
+            x += 600
+            y = 150
+
+            for row in grid:
+                for square in row:
+                    pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
+
+        # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 print("P1")
