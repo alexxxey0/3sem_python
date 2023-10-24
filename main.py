@@ -33,7 +33,7 @@ for i in range(10):
     for j in range(10):
         ships[i].append(0)
 
-p1_ships = p2_ships = [[1,1,1,1,0,0,0,0,0,0],
+'''p1_ships = p2_ships = [[1,1,1,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
             [1,1,1,0,0,0,0,1,1,1],
             [0,0,0,0,0,0,0,0,0,0],
@@ -42,7 +42,7 @@ p1_ships = p2_ships = [[1,1,1,1,0,0,0,0,0,0],
             [1,0,1,0,1,0,1,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0,0,0]]
+            [0,0,0,0,0,0,0,0,0,0]]'''
 
 # Define the grid for players to place their ships
 grid = []
@@ -93,8 +93,8 @@ for player_grid in grids:
 
 
 
-#tab = "start" # starting tab
-tab = "player1_move"
+tab = "start" # starting tab
+#tab = "player1_move"
 while run:
     clock.tick(FPS)
 
@@ -217,11 +217,25 @@ while run:
                                 if square["i"] != square_selected["i"]:
                                     for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
                                         grid[i][square["j"]]["width"] = 0
-                                        ships[i][square["j"]] = 1
+                                        if ships_placed < 1:
+                                            ships[i][square["j"]] = 4
+                                        elif ships_placed < 3:
+                                            ships[i][square["j"]] = 3
+                                        elif ships_placed < 6:
+                                            ships[i][square["j"]] = 2
+                                        else:
+                                            ships[i][square["j"]] = 1
                                 else:
                                     for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
                                         grid[square["i"]][j]["width"] = 0
-                                        ships[square["i"]][j] = 1
+                                        if ships_placed < 1:
+                                            ships[square["i"]][j] = 4
+                                        elif ships_placed < 3:
+                                            ships[square["i"]][j] = 3
+                                        elif ships_placed < 6:
+                                            ships[square["i"]][j] = 2
+                                        else:
+                                            ships[square["i"]][j] = 1
 
                                 ships_placed += 1
                             
@@ -260,11 +274,11 @@ while run:
                             if tab == "player1_ships":
                                 tab = "player2_ships"
                                 clear_board(grid)
-                                #p1_ships = ships
+                                p1_ships = ships
                             elif tab == "player2_ships":
                                 tab = "player1_move"
                                 clear_board(grid)
-                                #p2_ships = ships
+                                p2_ships = ships
                                 buttons.remove(reset_border)
                                 print(buttons)
 
@@ -313,7 +327,7 @@ while run:
                             else:
                                 square["color"] = RED
                                 tab = "player2_move"
-                                
+
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab  == "player2_move":
                 for row in p1_grid:
                     for square in row:
