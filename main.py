@@ -23,7 +23,7 @@ buttons = []
 ships_placed = 0
 ship_selected = False
 
-# ships - 10x10 matrix that represents the placement of the ships (contains numbers 0 and 1)
+# ships - 10x10 matrix that represents the placement of the ships
 # grid - 10x10 matrix that represents the visual state of the grid (contains grid square objects)
 
 # Define a 10x10 matrix, that will represent placed ships
@@ -133,8 +133,8 @@ p1_hits = 0
 p2_hits = 0
 
 ship_names = {
-    1: "ship4",
-    2: "ship3_1",
+    1: "ship4", # first ship that is placed
+    2: "ship3_1", # second ship that is placed etc.
     3: "ship3_2",
     4: "ship2_1",
     5: "ship2_2",
@@ -153,6 +153,7 @@ while run:
 
     if tab == "start":
         # Drawing
+        WIN.fill(BLACK)
         welcome_text = pixeloid(60).render("EPIC BATTLESHIP", True, NEON_GREEN)
         welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 200))
         WIN.blit(welcome_text, welcome_text_center)
@@ -322,10 +323,10 @@ while run:
 
 
     elif tab == "player1_move" or tab == "player2_move":
+        # Drawing
         WIN.fill(BLACK)
         pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
-        # Drawing
         place_ships_text = "Player 1, make your move ↓" if tab == "player1_move" else "↓ Player 2, make your move"
         welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
         welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 50))
@@ -344,14 +345,6 @@ while run:
                     pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
 
-        # Checking winning condition
-        if p1_hits == 20:
-            print("Player 1 won!")
-            run = False
-        elif p2_hits == 20:
-            print("Player 2 won!")
-            run = False
-
         # Event handler
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -360,6 +353,9 @@ while run:
                 print("P2")
                 print(numpy.matrix(p2_ships))
                 run = False
+
+            if p1_hits == 20 or p2_hits == 20:
+                tab = "win"
 
             # Player 1 attacking
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab == "player1_move":
@@ -420,8 +416,73 @@ while run:
                                 square["color"] = RED
                                 tab = "player1_move"
 
+    elif tab == "win":
+        # Drawing
+        print("Player 1 won!" if p1_hits == 1 else "Player 2 won!")
+        win_rect_outer = pg.Rect(0, 0, 510, 350)
+        win_rect_outer.center = (600, 300)
+        pg.draw.rect(WIN, RED, win_rect_outer)
+        win_rect = pg.Rect(0, 0, 490, 330)
+        win_rect.center = (600, 300)
+        pg.draw.rect(WIN, BLACK, win_rect)
 
+        win_text = pixeloid(40).render("Player 1 won!" if p1_hits == 1 else "Player 2 won!", True, NEON_GREEN)
+        win_text_center = win_text.get_rect(center = (WIDTH / 2, 250))
+        WIN.blit(win_text, win_text_center)
 
+        new_game_border_outer = pg.Rect(0, 0, 300, 100)
+        new_game_border_outer.center = (WIDTH / 2, 400)
+        pg.draw.rect(WIN, NEON_GREEN, new_game_border_outer, 5)
+        new_game = pixeloid(40).render("NEW GAME", True, NEON_GREEN)
+        new_game_center = new_game.get_rect(center = (WIDTH / 2, 400))
+        WIN.blit(new_game, new_game_center)
+        if new_game_border_outer not in buttons:
+            buttons.append(new_game_border_outer)
+
+        # Event handler
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                print("P1")
+                print(numpy.matrix(p1_ships))
+                print("P2")
+                print(numpy.matrix(p2_ships))
+                run = False
+
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                if "new_game_border_outer" in locals():
+                    if new_game_border_outer.collidepoint(event.pos):
+                        # Resetting everything back to default
+                        clear_board(grid)
+                        clear_board(p1_grid)
+                        clear_board(p2_grid)
+                        buttons = []
+                        p1_ship_hits = {"ship4": 0,
+                                "ship3_1": 0,
+                                "ship3_2": 0,
+                                "ship2_1": 0,
+                                "ship2_2": 0,
+                                "ship2_3": 0,
+                                "ship1_1": 0,
+                                "ship1_2": 0,
+                                "ship1_3": 0,
+                                "ship1_4": 0
+                                }
+
+                        p2_ship_hits = {"ship4": 0,
+                                "ship3_1": 0,
+                                "ship3_2": 0,
+                                "ship2_1": 0,
+                                "ship2_2": 0,
+                                "ship2_3": 0,
+                                "ship1_1": 0,
+                                "ship1_2": 0,
+                                "ship1_3": 0,
+                                "ship1_4": 0
+                                }
+                        p1_hits = 0
+                        p2_hits = 0
+                        tab = "start"
 
     for button in buttons:
         if button.collidepoint(pg.mouse.get_pos()):
