@@ -20,6 +20,13 @@ clock = pg.time.Clock()
 run = True
 buttons = []
 
+music_playing = True
+music_icon = pg.image.load("background_music_icon.png")
+MUSIC_ICON_SIZE = 50
+music_icon = pg.transform.scale(music_icon, (MUSIC_ICON_SIZE, MUSIC_ICON_SIZE))
+music_icon_rect = music_icon.get_rect(topleft = (10, 10))
+buttons.append(music_icon_rect)
+
 ships_placed = 0
 ship_selected = False
 
@@ -145,11 +152,16 @@ ship_names = {
     10: "ship1_4"
 }
 
+pg.mixer.init()
+pg.mixer.music.load("battleship_background_music.mp3")
+pg.mixer.music.play(loops = -1)
 
 tab = "start" # starting tab
 #tab = "player1_move"
 while run:
     clock.tick(FPS)
+
+    pg_events = pg.event.get()
 
     if tab == "start":
         # Drawing
@@ -168,7 +180,7 @@ while run:
             buttons.append(start_text_border_outer)
 
         # Event handler
-        for event in pg.event.get():
+        for event in pg_events:
             if event.type == pg.QUIT:
                 run = False
         
@@ -183,6 +195,7 @@ while run:
     
     elif tab == "player1_ships" or tab == "player2_ships":
         # Drawing
+        WIN.fill(BLACK)
         place_ships_text = "Player 1, place your ships" if tab == "player1_ships" else "Player 2, place your ships"
         welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
         welcome_text_center = welcome_text.get_rect(center = (WIDTH / 2, 100))
@@ -197,17 +210,28 @@ while run:
         if reset_border not in buttons:
             buttons.append(reset_border)
 
+        # if the player has placed all 10 ships, display the confirm button
+        if ships_placed == 10:
+            confirm_border = pg.Rect(0, 0, 150, 100)
+            confirm_border.center = (1025, 600)
+            pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
+            confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
+            confirm_text_center = confirm_text.get_rect(center = (1025, 600))
+            WIN.blit(confirm_text, confirm_text_center)
+            if confirm_border not in buttons:
+                buttons.append(confirm_border)
+
         for row in grid:
             for square in row:
                 pg.draw.rect(WIN, square["color"], square["rect"], square["width"])
 
         # Event handler
-        for event in pg.event.get():
+        for event in pg_events:
             if event.type == pg.QUIT:
-                print("P1")
-                print(numpy.matrix(p1_ships))
-                print("P2")
-                print(numpy.matrix(p2_ships))
+                #print("P1")
+                #print(numpy.matrix(p1_ships))
+                #print("P2")
+                #print(numpy.matrix(p2_ships))
                 run = False
 
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
@@ -274,17 +298,6 @@ while run:
                                         ships[square["i"]][j] = ship_names[ships_placed + 1]
 
                                 ships_placed += 1
-                            
-                # if the player has placed all 10 ships, display the confirm button
-                if ships_placed == 10:
-                    confirm_border = pg.Rect(0, 0, 150, 100)
-                    confirm_border.center = (1025, 600)
-                    pg.draw.rect(WIN, NEON_GREEN, confirm_border, 2)
-                    confirm_text = pixeloid(24).render("CONFIRM", True, NEON_GREEN)
-                    confirm_text_center = confirm_text.get_rect(center = (1025, 600))
-                    WIN.blit(confirm_text, confirm_text_center)
-                    if confirm_border not in buttons:
-                        buttons.append(confirm_border)
                 
                 # if player clicks reset, reset everything back to default
                 if reset_border.collidepoint(event.pos):
@@ -302,7 +315,7 @@ while run:
                 # if player clicks confirm, save the ships matrix into a variable (p1_ships for player 1, p2_ships for player 2)
                 # as a result, we get 2 10x10 matrices, which represent the placement of players' ships
                 if "confirm_border" in locals():
-                    if confirm_border.collidepoint(event.pos):
+                    if confirm_border.collidepoint(event.pos) and ships_placed == 10:
                         WIN.fill(BLACK)
                         if confirm_border in buttons:
                             buttons.remove(confirm_border)
@@ -346,12 +359,12 @@ while run:
 
 
         # Event handler
-        for event in pg.event.get():
+        for event in pg_events:
             if event.type == pg.QUIT:
-                print("P1")
-                print(numpy.matrix(p1_ships))
-                print("P2")
-                print(numpy.matrix(p2_ships))
+                #print("P1")
+                #print(numpy.matrix(p1_ships))
+                #print("P2")
+                #print(numpy.matrix(p2_ships))
                 run = False
 
             if p1_hits == 20 or p2_hits == 20:
@@ -362,9 +375,9 @@ while run:
                 for row in p2_grid:
                     for square in row:
                         if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
-                            print(p1_ship_hits)
-                            print()
-                            print(p2_ships)
+                            #print(p1_ship_hits)
+                            #print()
+                            #print(p2_ships)
 
                             if p2_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
@@ -373,11 +386,11 @@ while run:
                                 destroyed_ship = check_if_destroyed(p1_ship_hits)
 
                                 if destroyed_ship:
-                                    x = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+                                    adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p2_grid:
                                         for square in row:
-                                            for i in x:
+                                            for i in adjacent_squares:
                                                 if square["i"] + i[0] in out or square["j"] + i[1] in out:
                                                     continue
                                                 if p2_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p2_ships[square["i"]][square["j"]] == 0:
@@ -401,11 +414,11 @@ while run:
                                 destroyed_ship = check_if_destroyed(p2_ship_hits)
 
                                 if destroyed_ship:
-                                    x = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+                                    adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p1_grid:
                                         for square in row:
-                                            for i in x:
+                                            for i in adjacent_squares:
                                                 if square["i"] + i[0] in out or square["j"] + i[1] in out:
                                                     continue
                                                 if p1_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p1_ships[square["i"]][square["j"]] == 0:
@@ -418,7 +431,7 @@ while run:
 
     elif tab == "win":
         # Drawing
-        print("Player 1 won!" if p1_hits == 1 else "Player 2 won!")
+        #print("Player 1 won!" if p1_hits == 1 else "Player 2 won!")
         win_rect_outer = pg.Rect(0, 0, 510, 350)
         win_rect_outer.center = (600, 300)
         pg.draw.rect(WIN, RED, win_rect_outer)
@@ -426,7 +439,7 @@ while run:
         win_rect.center = (600, 300)
         pg.draw.rect(WIN, BLACK, win_rect)
 
-        win_text = pixeloid(40).render("Player 1 won!" if p1_hits == 1 else "Player 2 won!", True, NEON_GREEN)
+        win_text = pixeloid(40).render("Player 1 won!" if p1_hits == 20 else "Player 2 won!", True, NEON_GREEN)
         win_text_center = win_text.get_rect(center = (WIDTH / 2, 250))
         WIN.blit(win_text, win_text_center)
 
@@ -441,12 +454,12 @@ while run:
 
         # Event handler
 
-        for event in pg.event.get():
+        for event in pg_events:
             if event.type == pg.QUIT:
-                print("P1")
-                print(numpy.matrix(p1_ships))
-                print("P2")
-                print(numpy.matrix(p2_ships))
+                #print("P1")
+                #print(numpy.matrix(p1_ships))
+                #print("P2")
+                #print(numpy.matrix(p2_ships))
                 run = False
 
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
@@ -490,6 +503,22 @@ while run:
             break
         else:
             pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
+    
+    if music_playing:
+        WIN.blit(music_icon, (10, 10))
+    else:
+        WIN.blit(music_icon, (10, 10))
+        pg.draw.line(WIN, NEON_GREEN, (10, 10), (10 + MUSIC_ICON_SIZE, 10 + MUSIC_ICON_SIZE), 4)
+
+    # Handling background music
+    for event in pg_events:
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and music_icon_rect.collidepoint(event.pos):
+            if music_playing:
+                pg.mixer.music.pause()
+                music_playing = False
+            else:
+                pg.mixer.music.unpause()
+                music_playing = True
 
     pg.display.update()
 
