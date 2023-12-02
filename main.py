@@ -244,9 +244,7 @@ while run:
                     for row in grid:
                         for square in row:
                             if square["rect"].collidepoint(event.pos) and valid_square(square, ships):
-                                square_selected = {"i": square["i"], "j": square["j"]}
-                                square["width"] = 0
-                                ship_selected = True
+                                valid_options = False
 
                                 if ships_placed < 1:
                                     offset = 3
@@ -254,16 +252,24 @@ while run:
                                     offset = 2
                                 elif ships_placed < 6: 
                                     offset = 1
-
+                                    
                                 if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships):
                                     grid[square["i"] - offset][square["j"]]["color"] = RED
+                                    valid_options = True
                                 if square["i"] <= 9 - offset and valid_square(grid[square["i"] + offset][square["j"]], ships):
                                     grid[square["i"] + offset][square["j"]]["color"] = RED
+                                    valid_options = True
                                 if square["j"] >= offset and valid_square(grid[square["i"]][square["j"] - offset], ships):
                                     grid[square["i"]][square["j"] - offset]["color"] = RED
+                                    valid_options = True
                                 if square["j"] <= 9 - offset and valid_square(grid[square["i"]][square["j"] +  offset], ships):
                                     grid[square["i"]][square["j"] +  offset]["color"] = RED
+                                    valid_options = True
 
+                                if valid_options:
+                                    square_selected = {"i": square["i"], "j": square["j"]}
+                                    square["width"] = 0
+                                    ship_selected = True
 
                 elif ships_placed < 10:
                     '''
@@ -375,9 +381,6 @@ while run:
                 for row in p2_grid:
                     for square in row:
                         if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
-                            #print(p1_ship_hits)
-                            #print()
-                            #print(p2_ships)
 
                             if p2_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
@@ -431,7 +434,6 @@ while run:
 
     elif tab == "win":
         # Drawing
-        #print("Player 1 won!" if p1_hits == 1 else "Player 2 won!")
         win_rect_outer = pg.Rect(0, 0, 510, 350)
         win_rect_outer.center = (600, 300)
         pg.draw.rect(WIN, RED, win_rect_outer)
@@ -504,13 +506,13 @@ while run:
         else:
             pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
     
+    # Handling background music
     if music_playing:
         WIN.blit(music_icon, (10, 10))
     else:
         WIN.blit(music_icon, (10, 10))
         pg.draw.line(WIN, NEON_GREEN, (10, 10), (10 + MUSIC_ICON_SIZE, 10 + MUSIC_ICON_SIZE), 4)
 
-    # Handling background music
     for event in pg_events:
         if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and music_icon_rect.collidepoint(event.pos):
             if music_playing:
