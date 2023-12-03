@@ -18,14 +18,13 @@ FPS = 30
 
 clock = pg.time.Clock()
 run = True
-buttons = []
 
 music_playing = True
 music_icon = pg.image.load("background_music_icon.png")
 MUSIC_ICON_SIZE = 50
 music_icon = pg.transform.scale(music_icon, (MUSIC_ICON_SIZE, MUSIC_ICON_SIZE))
 music_icon_rect = music_icon.get_rect(topleft = (10, 10))
-buttons.append(music_icon_rect)
+buttons = [music_icon_rect]
 
 ships_placed = 0
 ship_selected = False
@@ -209,6 +208,26 @@ while run:
         WIN.blit(reset_text, reset_text_center)
         if reset_border not in buttons:
             buttons.append(reset_border)
+
+        ship_count = {4: 0 if ships_placed == 0 else 1,
+                      3: 2 if ships_placed >= 3 else ships_placed - 1,
+                      2: 3 if ships_placed >= 6 else ships_placed - 3,
+                      1: 4 if ships_placed == 10 else ships_placed - 6}
+        for key in ship_count:
+            if ship_count[key] < 0:
+                ship_count[key] = 0
+
+        ships_placed_texts = [[f"4x1 ships placed: {ship_count[4]} / 1", ship_count[4] == 1],
+                              [f"3x1 ships placed: {ship_count[3]} / 2", ship_count[3] == 2],
+                              [f"2x1 ships placed: {ship_count[2]} / 3", ship_count[2] == 3],
+                              [f"1x1 ships placed: {ship_count[1]} / 4", ship_count[1] == 4]]
+        
+        y = 200
+        for i in ships_placed_texts:
+            text = pixeloid(18).render(i[0], True, NEON_GREEN if i[1] else RED)
+            text_center = text.get_rect(center = (1025, y))
+            WIN.blit(text, text_center)
+            y += 50
 
         # if the player has placed all 10 ships, display the confirm button
         if ships_placed == 10:
@@ -433,11 +452,13 @@ while run:
                                 tab = "player1_move"
 
     elif tab == "win":
+        WIN.fill(BLACK)
+
         # Drawing
-        win_rect_outer = pg.Rect(0, 0, 510, 350)
+        win_rect_outer = pg.Rect(0, 0, 510, 370)
         win_rect_outer.center = (600, 300)
         pg.draw.rect(WIN, RED, win_rect_outer)
-        win_rect = pg.Rect(0, 0, 490, 330)
+        win_rect = pg.Rect(0, 0, 490, 350)
         win_rect.center = (600, 300)
         pg.draw.rect(WIN, BLACK, win_rect)
 
@@ -468,10 +489,11 @@ while run:
                 if "new_game_border_outer" in locals():
                     if new_game_border_outer.collidepoint(event.pos):
                         # Resetting everything back to default
+
                         clear_board(grid)
                         clear_board(p1_grid)
                         clear_board(p2_grid)
-                        buttons = []
+                        buttons = [music_icon_rect]
                         p1_ship_hits = {"ship4": 0,
                                 "ship3_1": 0,
                                 "ship3_2": 0,
