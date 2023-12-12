@@ -1,5 +1,4 @@
 import pygame as pg
-import numpy
 from functions import *
 
 WIDTH, HEIGHT = 1200, 700
@@ -29,15 +28,15 @@ buttons = [music_icon_rect]
 ships_placed = 0
 ship_selected = False
 
-# ships - 10x10 matrix that represents the placement of the ships
+# ships_matrix - 10x10 matrix that represents the placement of the ships
 # grid - 10x10 matrix that represents the visual state of the grid (contains grid square objects)
 
 # Define a 10x10 matrix, that will represent placed ships
-ships = []
+ships_matrix = []
 for i in range(10):
-    ships.append([])
+    ships_matrix.append([])
     for j in range(10):
-        ships[i].append(0)
+        ships_matrix[i].append(0)
 
 # for testing
 '''p1_ships = [['ship4', 'ship4', 'ship4', 'ship4', 0, 0, 'ship3_1', 'ship3_1', 'ship3_1', 0],
@@ -74,8 +73,8 @@ for i in range(10):
             rect - the rect object associated with the square
             color - the color of the square
             width - outline thickness (0 to fill completely)
-            i - i coordinate [0-9] (0,0 is the top left corner)
-            j - j coordinate [0-9]
+            i - i coordinate (horizontal) [0-9] (0,0 is the top left corner)
+            j - j coordinate (vertical) [0-9]
         '''
         grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
         x += 50
@@ -110,7 +109,7 @@ for player_grid in grids:
     y = 100
 
 # Information about players' hits (necessary to tell if a ship is fully destroyed)
-p1_ship_hits = {"ship4": 0,
+p1_ship_hits = {"ship4": 0, # ship name: how many times this ship was hit
            "ship3_1": 0,
            "ship3_2": 0,
            "ship2_1": 0,
@@ -140,7 +139,7 @@ p2_hits = 0
 
 ship_names = {
     1: "ship4", # first ship that is placed
-    2: "ship3_1", # second ship that is placed etc.
+    2: "ship3_1", # second ship that is placed etc. (each of the 10 ships has a unique name)
     3: "ship3_2",
     4: "ship2_1",
     5: "ship2_2",
@@ -153,7 +152,7 @@ ship_names = {
 
 pg.mixer.init()
 pg.mixer.music.load("battleship_background_music.mp3")
-pg.mixer.music.play(loops = -1)
+pg.mixer.music.play(loops=-1) # play music on repeat
 
 tab = "start" # starting tab
 #tab = "player1_move"
@@ -183,13 +182,10 @@ while run:
             if event.type == pg.QUIT:
                 run = False
         
-            if event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == 1:
-
-                    if start_text_border_outer.collidepoint(event.pos):
-                        tab = "player1_ships"
-                        WIN.fill(BLACK)
-                        buttons.remove(start_text_border_outer)
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and start_text_border_outer.collidepoint(event.pos):
+                tab = "player1_ships"
+                WIN.fill(BLACK)
+                buttons.remove(start_text_border_outer)
 
     
     elif tab == "player1_ships" or tab == "player2_ships":
@@ -262,7 +258,7 @@ while run:
                     '''
                     for row in grid:
                         for square in row:
-                            if square["rect"].collidepoint(event.pos) and valid_square(square, ships):
+                            if square["rect"].collidepoint(event.pos) and valid_square(square, ships_matrix):
                                 valid_options = False
 
                                 if ships_placed < 1:
@@ -272,16 +268,16 @@ while run:
                                 elif ships_placed < 6: 
                                     offset = 1
                                     
-                                if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships):
+                                if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships_matrix):
                                     grid[square["i"] - offset][square["j"]]["color"] = RED
                                     valid_options = True
-                                if square["i"] <= 9 - offset and valid_square(grid[square["i"] + offset][square["j"]], ships):
+                                if square["i"] <= 9 - offset and valid_square(grid[square["i"] + offset][square["j"]], ships_matrix):
                                     grid[square["i"] + offset][square["j"]]["color"] = RED
                                     valid_options = True
-                                if square["j"] >= offset and valid_square(grid[square["i"]][square["j"] - offset], ships):
+                                if square["j"] >= offset and valid_square(grid[square["i"]][square["j"] - offset], ships_matrix):
                                     grid[square["i"]][square["j"] - offset]["color"] = RED
                                     valid_options = True
-                                if square["j"] <= 9 - offset and valid_square(grid[square["i"]][square["j"] +  offset], ships):
+                                if square["j"] <= 9 - offset and valid_square(grid[square["i"]][square["j"] +  offset], ships_matrix):
                                     grid[square["i"]][square["j"] +  offset]["color"] = RED
                                     valid_options = True
 
@@ -297,7 +293,7 @@ while run:
                     '''
                     for row in grid:
                         for square in row:
-                            if square["rect"].collidepoint(event.pos) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships):
+                            if square["rect"].collidepoint(event.pos) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships_matrix):
                                 square["color"] = NEON_GREEN
                                 square["width"] = 0
                                 ship_selected = False
@@ -311,16 +307,16 @@ while run:
                                 '''
                                     at this point the player has confirmed both the start and end points of the ship, so we do 2 things:
                                     1) fill the squares between the ones player has selected with green (thus, displaying the ship properly)
-                                    2) add the ship to the 'ships' matrix
+                                    2) add the ship to the 'ships_matrix' matrix
                                 '''
                                 if square["i"] != square_selected["i"]:
                                     for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
                                         grid[i][square["j"]]["width"] = 0
-                                        ships[i][square["j"]] = ship_names[ships_placed + 1]
+                                        ships_matrix[i][square["j"]] = ship_names[ships_placed + 1]
                                 else:
                                     for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
                                         grid[square["i"]][j]["width"] = 0
-                                        ships[square["i"]][j] = ship_names[ships_placed + 1]
+                                        ships_matrix[square["i"]][j] = ship_names[ships_placed + 1]
 
                                 ships_placed += 1
                 
@@ -331,13 +327,12 @@ while run:
                     ship_selected = False
                     clear_board(grid)
 
-                    if "confirm_border" in locals():
-                        if confirm_border in buttons:
-                            buttons.remove(confirm_border)
+                    if ("confirm_border" in locals()) and (confirm_border in buttons):
+                        buttons.remove(confirm_border)
 
-                    ships = clear_ships(ships)
+                    ships_matrix = clear_ships(ships_matrix)
 
-                # if player clicks confirm, save the ships matrix into a variable (p1_ships for player 1, p2_ships for player 2)
+                # if player clicks confirm, save the ships_matrix matrix into a variable (p1_ships for player 1, p2_ships for player 2)
                 # as a result, we get 2 10x10 matrices, which represent the placement of players' ships
                 if "confirm_border" in locals():
                     if confirm_border.collidepoint(event.pos) and ships_placed == 10:
@@ -348,16 +343,16 @@ while run:
                             if tab == "player1_ships":
                                 tab = "player2_ships"
                                 clear_board(grid)
-                                p1_ships = ships
+                                p1_ships = ships_matrix
                             elif tab == "player2_ships":
                                 tab = "player1_move"
                                 clear_board(grid)
-                                p2_ships = ships
+                                p2_ships = ships_matrix
                                 buttons.remove(reset_border)
 
                             ships_placed = 0
                             ship_selected = False
-                            ships = clear_ships(ships)
+                            ships_matrix = clear_ships(ships_matrix)
 
 
     elif tab == "player1_move" or tab == "player2_move":
@@ -386,10 +381,6 @@ while run:
         # Event handler
         for event in pg_events:
             if event.type == pg.QUIT:
-                #print("P1")
-                #print(numpy.matrix(p1_ships))
-                #print("P2")
-                #print(numpy.matrix(p2_ships))
                 run = False
 
             if p1_hits == 20 or p2_hits == 20:
@@ -407,7 +398,7 @@ while run:
                                 p1_hits += 1
                                 destroyed_ship = check_if_destroyed(p1_ship_hits)
 
-                                if destroyed_ship:
+                                if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
                                     adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p2_grid:
@@ -435,7 +426,7 @@ while run:
                                 p2_hits += 1
                                 destroyed_ship = check_if_destroyed(p2_ship_hits)
 
-                                if destroyed_ship:
+                                if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
                                     adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p1_grid:
@@ -452,9 +443,9 @@ while run:
                                 tab = "player1_move"
 
     elif tab == "win":
+        # Drawing
         WIN.fill(BLACK)
 
-        # Drawing
         win_rect_outer = pg.Rect(0, 0, 510, 370)
         win_rect_outer.center = (600, 300)
         pg.draw.rect(WIN, RED, win_rect_outer)
@@ -476,50 +467,44 @@ while run:
             buttons.append(new_game_border_outer)
 
         # Event handler
-
         for event in pg_events:
             if event.type == pg.QUIT:
-                #print("P1")
-                #print(numpy.matrix(p1_ships))
-                #print("P2")
-                #print(numpy.matrix(p2_ships))
                 run = False
 
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                if "new_game_border_outer" in locals():
-                    if new_game_border_outer.collidepoint(event.pos):
-                        # Resetting everything back to default
+                if ("new_game_border_outer" in locals()) and (new_game_border_outer.collidepoint(event.pos)):
+                    # Resetting everything back to default
 
-                        clear_board(grid)
-                        clear_board(p1_grid)
-                        clear_board(p2_grid)
-                        buttons = [music_icon_rect]
-                        p1_ship_hits = {"ship4": 0,
-                                "ship3_1": 0,
-                                "ship3_2": 0,
-                                "ship2_1": 0,
-                                "ship2_2": 0,
-                                "ship2_3": 0,
-                                "ship1_1": 0,
-                                "ship1_2": 0,
-                                "ship1_3": 0,
-                                "ship1_4": 0
-                                }
+                    clear_board(grid)
+                    clear_board(p1_grid)
+                    clear_board(p2_grid)
+                    buttons = [music_icon_rect]
+                    p1_ship_hits = {"ship4": 0,
+                            "ship3_1": 0,
+                            "ship3_2": 0,
+                            "ship2_1": 0,
+                            "ship2_2": 0,
+                            "ship2_3": 0,
+                            "ship1_1": 0,
+                            "ship1_2": 0,
+                            "ship1_3": 0,
+                            "ship1_4": 0
+                            }
 
-                        p2_ship_hits = {"ship4": 0,
-                                "ship3_1": 0,
-                                "ship3_2": 0,
-                                "ship2_1": 0,
-                                "ship2_2": 0,
-                                "ship2_3": 0,
-                                "ship1_1": 0,
-                                "ship1_2": 0,
-                                "ship1_3": 0,
-                                "ship1_4": 0
-                                }
-                        p1_hits = 0
-                        p2_hits = 0
-                        tab = "start"
+                    p2_ship_hits = {"ship4": 0,
+                            "ship3_1": 0,
+                            "ship3_2": 0,
+                            "ship2_1": 0,
+                            "ship2_2": 0,
+                            "ship2_3": 0,
+                            "ship1_1": 0,
+                            "ship1_2": 0,
+                            "ship1_3": 0,
+                            "ship1_4": 0
+                            }
+                    p1_hits = 0
+                    p2_hits = 0
+                    tab = "start"
 
     for button in buttons:
         if button.collidepoint(pg.mouse.get_pos()):

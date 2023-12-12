@@ -8,10 +8,11 @@ Accepts a square and current board state, returns True if the square is valid (n
 Otherwise returns False
 '''
 def valid_square(square, ships):
-    x = [[0, 0], [0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+    # adding these pairs of coordinaters to the square will give us all of the adjacent squares
+    adjacent_squares = [[0, 0], [0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
     out = [-1, 10]
     
-    for i in x:
+    for i in adjacent_squares:
         if square["i"] + i[0] in out or square["j"] + i[1] in out:
             continue
         if ships[square["i"] + i[0]][square["j"] + i[1]] != 0:
@@ -46,12 +47,15 @@ def clear_red_squares(grid):
                 square["color"] = NEON_GREEN
 
 
-# function that takes a dictionary with player's hits and checks if any ship is fully destroyed. If so, marks it as destroyed
+'''
+Function that takes a dictionary with player's hits and checks if any ship is fully destroyed.
+If so, marks it as destroyed and returns the name of the ship. Otherwise, returns False.
+'''
 def check_if_destroyed(ship_hits):
     for key, value in ship_hits.items():
         if key == "ship4" and value == 4:
             ship_hits[key] = "destroyed"
-            return key # return the ship which is destroyed
+            return key # return the ship which has been destroyed during this turn
         elif key in ("ship3_1", "ship3_2") and value == 3:
             ship_hits[key] = "destroyed"
             return key
