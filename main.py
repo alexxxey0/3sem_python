@@ -101,8 +101,8 @@ for player_grid in grids:
                 rect - the rect object associated with the square
                 color - the color of the square
                 width - outline thickness (0 to fill completely)
-                i - i coordinate [0-9] (0,0 is the top left corner)
-                j - j coordinate [0-9]
+                i - i coordinate (horizontal) [0-9] (0,0 is the top left corner)
+                j - j coordinate (vertical) [0-9]
             '''
             player_grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
             x += 50
@@ -157,6 +157,12 @@ ship_names = {
 pg.mixer.music.load("main_menu.mp3")
 confirm_sound = pg.mixer.Sound("confirm.mp3")
 reset_sound = pg.mixer.Sound("reset.mp3")
+ship_placing_sound_1 = pg.mixer.Sound("ship_placing_1.mp3")
+ship_placing_sound_2 = pg.mixer.Sound("ship_placing_2.mp3")
+ship_hit_sound = pg.mixer.Sound("ship_hit.mp3")
+ship_destroyed_sound = pg.mixer.Sound("ship_destroyed.mp3")
+ship_missed_sound = pg.mixer.Sound("ship_missed.mp3")
+victory_sound = pg.mixer.Sound("victory.mp3")
 pg.mixer.music.play(loops=-1) # play music on repeat
 pg.mixer.music.set_volume(0.5)
 
@@ -169,14 +175,6 @@ while run:
     clock.tick(FPS)
 
     pg_events = pg.event.get()
-
-    # Change the cursor when player hovers over a button
-    for button in buttons:
-        if button.collidepoint(pg.mouse.get_pos()):
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
-            break
-        else:
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
     if tab == "start":
         # Drawing
@@ -215,7 +213,7 @@ while run:
                 pg.mixer.music.unload()
                 pg.mixer.music.load("placing_ships.mp3")
                 pg.mixer.music.play(loops=-1)
-                pg.mixer.music.set_volume(1.0)
+                pg.mixer.music.set_volume(0.5)
                 if not music_playing:
                     pg.mixer.music.pause()
     
@@ -286,6 +284,7 @@ while run:
                     for row in grid:
                         for square in row:
                             if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix):
+                                pg.mixer.Sound.play(ship_placing_sound_1)
                                 valid_options = False
 
                                 if ships_placed < 1:
@@ -321,6 +320,7 @@ while run:
                     for row in grid:
                         for square in row:
                             if square["rect"].collidepoint(pg.mouse.get_pos()) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships_matrix):
+                                pg.mixer.Sound.play(ship_placing_sound_2)
                                 square["color"] = NEON_GREEN
                                 square["width"] = 0
                                 ship_selected = False
@@ -372,6 +372,16 @@ while run:
                         clear_board(grid)
                         p1_ships = ships_matrix
                     elif tab == "player2_ships":
+                        # Changing background music
+                        music_playing = False if music_playing == False else True
+                        pg.mixer.music.stop()
+                        pg.mixer.music.unload()
+                        pg.mixer.music.load("battle_music.mp3")
+                        pg.mixer.music.play(loops=-1)
+                        pg.mixer.music.set_volume(0.5)
+                        if not music_playing:
+                            pg.mixer.music.pause()
+
                         tab = "player1_move"
                         clear_board(grid)
                         p2_ships = ships_matrix
@@ -393,7 +403,7 @@ while run:
                             square["width"] = 2
 
                     else:
-                        if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix):
+                        if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix) and ships_placed != 10:
                             square["width"] = 5
                         else:
                             if ships_matrix[square["i"]][square["j"]] != 0:
@@ -404,7 +414,6 @@ while run:
     elif tab == "player1_move" or tab == "player2_move":
         # Drawing
         WIN.fill(BLACK)
-        pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
         place_ships_text = "Player 1, make your move ↓" if tab == "player1_move" else "↓ Player 2, make your move"
         welcome_text = pixeloid(40).render(place_ships_text, True, NEON_GREEN)
@@ -430,6 +439,10 @@ while run:
                 run = False
 
             if p1_hits == 20 or p2_hits == 20:
+                # Changing background music
+                pg.mixer.music.stop()
+                pg.mixer.music.unload()
+                pg.mixer.Sound.play(victory_sound)
                 tab = "win"
 
             # Player 1 attacking
@@ -445,6 +458,7 @@ while run:
                                 destroyed_ship = check_if_destroyed(p1_ship_hits)
 
                                 if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
+                                    pg.mixer.Sound.play(ship_destroyed_sound)
                                     adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p2_grid:
@@ -455,8 +469,11 @@ while run:
                                                 if p2_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p2_ships[square["i"]][square["j"]] == 0:
                                                     square["color"] = RED
                                                     break
+                                else:
+                                    pg.mixer.Sound.play(ship_hit_sound)
 
                             else:
+                                pg.mixer.Sound.play(ship_missed_sound)
                                 square["color"] = RED
                                 tab = "player2_move"
 
@@ -473,6 +490,7 @@ while run:
                                 destroyed_ship = check_if_destroyed(p2_ship_hits)
 
                                 if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
+                                    pg.mixer.Sound.play(ship_destroyed_sound)
                                     adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
                                     out = [-1, 10]
                                     for row in p1_grid:
@@ -483,8 +501,11 @@ while run:
                                                 if p1_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p1_ships[square["i"]][square["j"]] == 0:
                                                     square["color"] = RED
                                                     break
+                                else:
+                                    pg.mixer.Sound.play(ship_hit_sound)
 
                             else:
+                                pg.mixer.Sound.play(ship_missed_sound)
                                 square["color"] = RED
                                 tab = "player1_move"
 
@@ -551,6 +572,14 @@ while run:
                     p1_hits = 0
                     p2_hits = 0
                     tab = "start"
+                    
+                    # Changing background music
+                    music_playing = False if music_playing == False else True
+                    pg.mixer.music.load("main_menu.mp3")
+                    pg.mixer.music.play(loops=-1)
+                    pg.mixer.music.set_volume(0.5)
+                    if not music_playing:
+                        pg.mixer.music.pause()
     
     # Handling background music
     if music_playing:
@@ -567,6 +596,14 @@ while run:
             else:
                 pg.mixer.music.unpause()
                 music_playing = True
+
+    # Change the cursor when player hovers over a button
+    for button in buttons:
+        if button.collidepoint(pg.mouse.get_pos()):
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
+            break
+    else:
+        pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
     pg.display.update()
 
