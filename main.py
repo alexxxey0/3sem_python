@@ -1,6 +1,10 @@
 import pygame as pg
 from functions import *
 
+pg.mixer.pre_init(44100, -16, 2, 2048)
+pg.mixer.init()
+pg.init()
+
 WIDTH, HEIGHT = 1200, 700
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("Epic Battleship")
@@ -150,16 +154,29 @@ ship_names = {
     10: "ship1_4"
 }
 
-pg.mixer.init()
-pg.mixer.music.load("battleship_background_music.mp3")
+pg.mixer.music.load("main_menu.mp3")
+confirm_sound = pg.mixer.Sound("confirm.mp3")
+reset_sound = pg.mixer.Sound("reset.mp3")
 pg.mixer.music.play(loops=-1) # play music on repeat
+pg.mixer.music.set_volume(0.5)
 
 tab = "start" # starting tab
 #tab = "player1_move"
+
+
+# Main game loop
 while run:
     clock.tick(FPS)
 
     pg_events = pg.event.get()
+
+    # Change the cursor when player hovers over a button
+    for button in buttons:
+        if button.collidepoint(pg.mouse.get_pos()):
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
+            break
+        else:
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
     if tab == "start":
         # Drawing
@@ -177,16 +194,30 @@ while run:
         if start_text_border_outer not in buttons:
             buttons.append(start_text_border_outer)
 
+        created_by_text = pixeloid(32).render("Created by Alexey Gorlovich, 2023", True, NEON_GREEN)
+        created_by_text_center = created_by_text.get_rect(center = (WIDTH / 2, 650))
+        WIN.blit(created_by_text, created_by_text_center)
+
         # Event handler
         for event in pg_events:
             if event.type == pg.QUIT:
                 run = False
         
-            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and start_text_border_outer.collidepoint(event.pos):
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and start_text_border_outer.collidepoint(pg.mouse.get_pos()):
+                pg.mixer.Sound.play(confirm_sound)
                 tab = "player1_ships"
                 WIN.fill(BLACK)
                 buttons.remove(start_text_border_outer)
 
+                # Changing background music
+                music_playing = False if music_playing == False else True
+                pg.mixer.music.stop()
+                pg.mixer.music.unload()
+                pg.mixer.music.load("placing_ships.mp3")
+                pg.mixer.music.play(loops=-1)
+                pg.mixer.music.set_volume(1.0)
+                if not music_playing:
+                    pg.mixer.music.pause()
     
     elif tab == "player1_ships" or tab == "player2_ships":
         # Drawing
@@ -243,10 +274,6 @@ while run:
         # Event handler
         for event in pg_events:
             if event.type == pg.QUIT:
-                #print("P1")
-                #print(numpy.matrix(p1_ships))
-                #print("P2")
-                #print(numpy.matrix(p2_ships))
                 run = False
 
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
@@ -258,7 +285,7 @@ while run:
                     '''
                     for row in grid:
                         for square in row:
-                            if square["rect"].collidepoint(event.pos) and valid_square(square, ships_matrix):
+                            if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix):
                                 valid_options = False
 
                                 if ships_placed < 1:
@@ -293,7 +320,7 @@ while run:
                     '''
                     for row in grid:
                         for square in row:
-                            if square["rect"].collidepoint(event.pos) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships_matrix):
+                            if square["rect"].collidepoint(pg.mouse.get_pos()) and (square["color"] == RED or ships_placed >= 6) and valid_square(square, ships_matrix):
                                 square["color"] = NEON_GREEN
                                 square["width"] = 0
                                 ship_selected = False
@@ -321,7 +348,8 @@ while run:
                                 ships_placed += 1
                 
                 # if player clicks reset, reset everything back to default
-                if reset_border.collidepoint(event.pos):
+                if reset_border.collidepoint(pg.mouse.get_pos()):
+                    pg.mixer.Sound.play(reset_sound)
                     WIN.fill(BLACK)
                     ships_placed = 0
                     ship_selected = False
@@ -334,26 +362,44 @@ while run:
 
                 # if player clicks confirm, save the ships_matrix matrix into a variable (p1_ships for player 1, p2_ships for player 2)
                 # as a result, we get 2 10x10 matrices, which represent the placement of players' ships
-                if "confirm_border" in locals():
-                    if confirm_border.collidepoint(event.pos) and ships_placed == 10:
-                        WIN.fill(BLACK)
-                        if confirm_border in buttons:
-                            buttons.remove(confirm_border)
+                if ("confirm_border" in locals()) and (confirm_border in buttons) and confirm_border.collidepoint(pg.mouse.get_pos()) and ships_placed == 10:
+                    pg.mixer.Sound.play(confirm_sound)
+                    WIN.fill(BLACK)
+                    buttons.remove(confirm_border)
 
-                            if tab == "player1_ships":
-                                tab = "player2_ships"
-                                clear_board(grid)
-                                p1_ships = ships_matrix
-                            elif tab == "player2_ships":
-                                tab = "player1_move"
-                                clear_board(grid)
-                                p2_ships = ships_matrix
-                                buttons.remove(reset_border)
+                    if tab == "player1_ships":
+                        tab = "player2_ships"
+                        clear_board(grid)
+                        p1_ships = ships_matrix
+                    elif tab == "player2_ships":
+                        tab = "player1_move"
+                        clear_board(grid)
+                        p2_ships = ships_matrix
+                        buttons.remove(reset_border)
 
-                            ships_placed = 0
-                            ship_selected = False
-                            ships_matrix = clear_ships(ships_matrix)
+                    ships_placed = 0
+                    ship_selected = False
+                    ships_matrix = clear_ships(ships_matrix)
 
+            # Highlighting the square that the user is hovering over
+            for row in grid:
+                for square in row:
+                    if ship_selected:
+                        if square_selected["i"] == square["i"] and square_selected["j"] == square["j"]:
+                            square["width"] = 0
+                        elif square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] == RED:
+                            square["width"] = 5
+                        elif square["color"] == RED:
+                            square["width"] = 2
+
+                    else:
+                        if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix):
+                            square["width"] = 5
+                        else:
+                            if ships_matrix[square["i"]][square["j"]] != 0:
+                                square["width"] = 0
+                            else:
+                                square["width"] = 2
 
     elif tab == "player1_move" or tab == "player2_move":
         # Drawing
@@ -390,7 +436,7 @@ while run:
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab == "player1_move":
                 for row in p2_grid:
                     for square in row:
-                        if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
+                        if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
 
                             if p2_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
@@ -418,7 +464,7 @@ while run:
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab  == "player2_move":
                 for row in p1_grid:
                     for square in row:
-                        if square["rect"].collidepoint(event.pos) and square["color"] != RED and square["width"] != 0:
+                        if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
 
                             if p1_ships[square["i"]][square["j"]] != 0:
                                 square["width"] = 0
@@ -472,7 +518,7 @@ while run:
                 run = False
 
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                if ("new_game_border_outer" in locals()) and (new_game_border_outer.collidepoint(event.pos)):
+                if ("new_game_border_outer" in locals()) and (new_game_border_outer.collidepoint(pg.mouse.get_pos())):
                     # Resetting everything back to default
 
                     clear_board(grid)
@@ -505,13 +551,6 @@ while run:
                     p1_hits = 0
                     p2_hits = 0
                     tab = "start"
-
-    for button in buttons:
-        if button.collidepoint(pg.mouse.get_pos()):
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
-            break
-        else:
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
     
     # Handling background music
     if music_playing:
@@ -521,7 +560,7 @@ while run:
         pg.draw.line(WIN, NEON_GREEN, (10, 10), (10 + MUSIC_ICON_SIZE, 10 + MUSIC_ICON_SIZE), 4)
 
     for event in pg_events:
-        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and music_icon_rect.collidepoint(event.pos):
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and music_icon_rect.collidepoint(pg.mouse.get_pos()):
             if music_playing:
                 pg.mixer.music.pause()
                 music_playing = False
