@@ -27,7 +27,12 @@ music_icon = pg.image.load("background_music_icon.png")
 MUSIC_ICON_SIZE = 50
 music_icon = pg.transform.scale(music_icon, (MUSIC_ICON_SIZE, MUSIC_ICON_SIZE))
 music_icon_rect = music_icon.get_rect(topleft = (10, 10))
-buttons = [music_icon_rect]
+
+sfx_playing = True
+sfx_text = pixeloid(40).render("SFX", True, NEON_GREEN)
+sfx_text_topleft = sfx_text.get_rect(topleft = (80, 10))
+sfx_text_rect = pg.Rect(80, 10, 80 + sfx_text_topleft.width, 10 + sfx_text_topleft.height)
+buttons = [music_icon_rect, sfx_text_topleft]
 
 ships_placed = 0
 ship_selected = False
@@ -164,7 +169,9 @@ ship_destroyed_sound = pg.mixer.Sound("ship_destroyed.mp3")
 ship_missed_sound = pg.mixer.Sound("ship_missed.mp3")
 victory_sound = pg.mixer.Sound("victory.mp3")
 pg.mixer.music.play(loops=-1) # play music on repeat
-pg.mixer.music.set_volume(0.5)
+pg.mixer.music.set_volume(0.3)
+
+sounds = [confirm_sound, reset_sound, ship_placing_sound_1, ship_placing_sound_2, ship_hit_sound, ship_destroyed_sound, ship_missed_sound, victory_sound]
 
 tab = "start" # starting tab
 #tab = "player1_move"
@@ -213,7 +220,7 @@ while run:
                 pg.mixer.music.unload()
                 pg.mixer.music.load("placing_ships.mp3")
                 pg.mixer.music.play(loops=-1)
-                pg.mixer.music.set_volume(0.5)
+                pg.mixer.music.set_volume(0.3)
                 if not music_playing:
                     pg.mixer.music.pause()
     
@@ -378,7 +385,7 @@ while run:
                         pg.mixer.music.unload()
                         pg.mixer.music.load("battle_music.mp3")
                         pg.mixer.music.play(loops=-1)
-                        pg.mixer.music.set_volume(0.5)
+                        pg.mixer.music.set_volume(0.3)
                         if not music_playing:
                             pg.mixer.music.pause()
 
@@ -572,12 +579,12 @@ while run:
                     p1_hits = 0
                     p2_hits = 0
                     tab = "start"
-                    
+
                     # Changing background music
                     music_playing = False if music_playing == False else True
                     pg.mixer.music.load("main_menu.mp3")
                     pg.mixer.music.play(loops=-1)
-                    pg.mixer.music.set_volume(0.5)
+                    pg.mixer.music.set_volume(0.3)
                     if not music_playing:
                         pg.mixer.music.pause()
     
@@ -596,6 +603,26 @@ while run:
             else:
                 pg.mixer.music.unpause()
                 music_playing = True
+
+    # Handling sound effects (sfx)
+    if sfx_playing:
+        WIN.blit(sfx_text, sfx_text_topleft)
+    else:
+        WIN.blit(sfx_text, sfx_text_topleft)
+        pg.draw.line(WIN, NEON_GREEN, (80, 10), (80 + sfx_text_topleft.width, 10 + sfx_text_topleft.height), 4)
+
+    for event in pg_events:
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and sfx_text_rect.collidepoint(pg.mouse.get_pos()):
+            if sfx_playing:
+                for sound in sounds:
+                    pg.mixer.Sound.set_volume(sound, 0)
+                sfx_playing = False
+            else:
+                for sound in sounds:
+                    pg.mixer.Sound.set_volume(sound, 1)
+                sfx_playing = True
+
+
 
     # Change the cursor when player hovers over a button
     for button in buttons:
