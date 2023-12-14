@@ -17,7 +17,7 @@ BLACK = (0, 0, 0)
 NEON_GREEN = (57, 255, 20)
 RED = (255, 0, 0)
 
-FPS = 30
+FPS = 60
 
 clock = pg.time.Clock()
 run = True
@@ -245,6 +245,7 @@ while run:
                       3: 2 if ships_placed >= 3 else ships_placed - 1,
                       2: 3 if ships_placed >= 6 else ships_placed - 3,
                       1: 4 if ships_placed == 10 else ships_placed - 6}
+        
         for key in ship_count:
             if ship_count[key] < 0:
                 ship_count[key] = 0
@@ -295,12 +296,14 @@ while run:
                                 valid_options = False
 
                                 if ships_placed < 1:
-                                    offset = 3
+                                    offset = 3 # distance between two endpoints of the ship (basically, ship length - 1)
                                 elif ships_placed < 3:
                                     offset = 2
                                 elif ships_placed < 6: 
                                     offset = 1
                                     
+                                # Highlight the available squares where player can place the second end of the ship with red 
+                                # making sure that the square is within the grid and is a valid one
                                 if square["i"] >= offset and valid_square(grid[square["i"] - offset][square["j"]], ships_matrix):
                                     grid[square["i"] - offset][square["j"]]["color"] = RED
                                     valid_options = True
@@ -343,11 +346,11 @@ while run:
                                     1) fill the squares between the ones player has selected with green (thus, displaying the ship properly)
                                     2) add the ship to the 'ships_matrix' matrix
                                 '''
-                                if square["i"] != square_selected["i"]:
+                                if square["i"] != square_selected["i"]: # horizontally placed ship
                                     for i in range(min(square["i"], square_selected["i"]), max(square["i"], square_selected["i"]) + 1):
                                         grid[i][square["j"]]["width"] = 0
                                         ships_matrix[i][square["j"]] = ship_names[ships_placed + 1]
-                                else:
+                                else: # vertically placed ship
                                     for j in range(min(square["j"], square_selected["j"]), max(square["j"], square_selected["j"]) + 1):
                                         grid[square["i"]][j]["width"] = 0
                                         ships_matrix[square["i"]][j] = ship_names[ships_placed + 1]
@@ -445,76 +448,60 @@ while run:
             if event.type == pg.QUIT:
                 run = False
 
+            # Player attacking
+            def player_attack(tab, p1_grid, p1_ships, p1_ship_hits, p1_hits, p2_grid, p2_ships, p2_ship_hits, p2_hits):
+                if tab == "player1_move":
+                    my_grid, my_ships, my_ship_hits, my_hits = p1_grid, p1_ships, p1_ship_hits, p1_hits
+                    enemy_grid, enemy_ships, enemy_ship_hits, enemy_hits = p2_grid, p2_ships, p2_ship_hits, p2_hits
+                else:
+                    my_grid, my_ships, my_ship_hits, my_hits = p2_grid, p2_ships, p2_ship_hits, p2_hits
+                    enemy_grid, enemy_ships, enemy_ship_hits, enemy_hits = p1_grid, p1_ships, p1_ship_hits, p1_hits
+
+                if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                    for row in enemy_grid:
+                        for square in row:
+                            if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
+                                if enemy_ships[square["i"]][square["j"]] != 0:
+                                    square["width"] = 0
+                                    my_ship_hits[enemy_ships[square["i"]][square["j"]]] += 1
+                                    my_hits += 1
+                                    destroyed_ship = check_if_destroyed(my_ship_hits)
+
+                                    if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
+                                        pg.mixer.Sound.play(ship_destroyed_sound)
+                                        adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+                                        out = [-1, 10]
+                                        for row in enemy_grid:
+                                            for square in row:
+                                                for i in adjacent_squares:
+                                                    if square["i"] + i[0] in out or square["j"] + i[1] in out:
+                                                        continue
+                                                    if enemy_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and enemy_ships[square["i"]][square["j"]] == 0:
+                                                        square["color"] = RED
+                                                        break
+                                    else:
+                                        pg.mixer.Sound.play(ship_hit_sound)
+
+                                else:
+                                    pg.mixer.Sound.play(ship_missed_sound)
+                                    square["color"] = RED
+                                    tab = "player2_move" if tab == "player1_move" else "player1_move"
+
+                return (tab, my_hits, enemy_hits)
+
+            # Player 1 attacking
+            if tab == "player1_move":
+                tab, p1_hits, p2_hits = player_attack("player1_move", p1_grid, p1_ships, p1_ship_hits, p1_hits, p2_grid, p2_ships, p2_ship_hits, p2_hits)
+            # Player 2 attacking
+            elif tab == "player2_move":
+                tab, p2_hits, p1_hits = player_attack("player2_move", p1_grid, p1_ships, p1_ship_hits, p1_hits, p2_grid, p2_ships, p2_ship_hits, p2_hits)
+
             if p1_hits == 20 or p2_hits == 20:
                 # Changing background music
                 pg.mixer.music.stop()
                 pg.mixer.music.unload()
                 pg.mixer.Sound.play(victory_sound)
                 tab = "win"
-
-            # Player 1 attacking
-            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab == "player1_move":
-                for row in p2_grid:
-                    for square in row:
-                        if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
-
-                            if p2_ships[square["i"]][square["j"]] != 0:
-                                square["width"] = 0
-                                p1_ship_hits[p2_ships[square["i"]][square["j"]]] += 1
-                                p1_hits += 1
-                                destroyed_ship = check_if_destroyed(p1_ship_hits)
-
-                                if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
-                                    pg.mixer.Sound.play(ship_destroyed_sound)
-                                    adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
-                                    out = [-1, 10]
-                                    for row in p2_grid:
-                                        for square in row:
-                                            for i in adjacent_squares:
-                                                if square["i"] + i[0] in out or square["j"] + i[1] in out:
-                                                    continue
-                                                if p2_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p2_ships[square["i"]][square["j"]] == 0:
-                                                    square["color"] = RED
-                                                    break
-                                else:
-                                    pg.mixer.Sound.play(ship_hit_sound)
-
-                            else:
-                                pg.mixer.Sound.play(ship_missed_sound)
-                                square["color"] = RED
-                                tab = "player2_move"
-
-            # Player 2 attacking
-            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and tab  == "player2_move":
-                for row in p1_grid:
-                    for square in row:
-                        if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
-
-                            if p1_ships[square["i"]][square["j"]] != 0:
-                                square["width"] = 0
-                                p2_ship_hits[p1_ships[square["i"]][square["j"]]] += 1
-                                p2_hits += 1
-                                destroyed_ship = check_if_destroyed(p2_ship_hits)
-
-                                if destroyed_ship: # if the player has fully destroyed a ship during this turn, marks all of the adjacent squares to this ship with red (since no ships can be there anyway)
-                                    pg.mixer.Sound.play(ship_destroyed_sound)
-                                    adjacent_squares = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]
-                                    out = [-1, 10]
-                                    for row in p1_grid:
-                                        for square in row:
-                                            for i in adjacent_squares:
-                                                if square["i"] + i[0] in out or square["j"] + i[1] in out:
-                                                    continue
-                                                if p1_ships[square["i"] + i[0]][square["j"] + i[1]] == destroyed_ship and p1_ships[square["i"]][square["j"]] == 0:
-                                                    square["color"] = RED
-                                                    break
-                                else:
-                                    pg.mixer.Sound.play(ship_hit_sound)
-
-                            else:
-                                pg.mixer.Sound.play(ship_missed_sound)
-                                square["color"] = RED
-                                tab = "player1_move"
 
     elif tab == "win":
         # Drawing
