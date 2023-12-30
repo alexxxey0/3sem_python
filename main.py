@@ -13,6 +13,50 @@ pg.font.init()
 def pixeloid(size):
     return pg.font.Font("fonts/pixeloid_sans.ttf", size)
 
+# Function that visually highlights the square that the user is currently hovering over
+def highlight_hovered_square():
+    # For the ship placement screen
+    if tab == "player1_ships" or tab == "player2_ships":
+        for row in grid:
+            for square in row:
+                if ship_selected:
+                    if square_selected["i"] == square["i"] and square_selected["j"] == square["j"]:
+                        square["width"] = 0
+                    elif square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] == RED:
+                        square["width"] = 5
+                    elif square["color"] == RED:
+                        square["width"] = 2
+
+                else:
+                    if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix) and ships_placed != 10:
+                        square["width"] = 5
+                    else:
+                        if ships_matrix[square["i"]][square["j"]] != 0:
+                            square["width"] = 0
+                        else:
+                            square["width"] = 2
+
+    # For the battle screen
+    else:
+            for row in p2_grid:
+                for square in row:
+                    if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and tab == "player1_move" and not square["hit"]:
+                        square["width"] = 5
+                    elif not square["hit"]:
+                        square["width"] = 2
+                    else:
+                        square["width"] = 0
+
+            for row in p1_grid:
+                for square in row:
+                    if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and tab == "player2_move" and not square["hit"]:
+                        square["width"] = 5
+                    elif not square["hit"]:
+                        square["width"] = 2
+                    else:
+                        square["width"] = 0
+
+
 BLACK = (0, 0, 0)
 NEON_GREEN = (57, 255, 20)
 RED = (255, 0, 0)
@@ -109,7 +153,7 @@ for player_grid in grids:
                 i - i coordinate (horizontal) [0-9] (0,0 is the top left corner)
                 j - j coordinate (vertical) [0-9]
             '''
-            player_grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j})
+            player_grid[i].append({"rect": rect, "color": NEON_GREEN, "width": 2, "i": i, "j": j, "hit": False})
             x += 50
         y += 50
         x -= 500
@@ -402,24 +446,7 @@ while run:
                     ships_matrix = clear_ships(ships_matrix)
 
             # Highlighting the square that the user is hovering over
-            for row in grid:
-                for square in row:
-                    if ship_selected:
-                        if square_selected["i"] == square["i"] and square_selected["j"] == square["j"]:
-                            square["width"] = 0
-                        elif square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] == RED:
-                            square["width"] = 5
-                        elif square["color"] == RED:
-                            square["width"] = 2
-
-                    else:
-                        if square["rect"].collidepoint(pg.mouse.get_pos()) and valid_square(square, ships_matrix) and ships_placed != 10:
-                            square["width"] = 5
-                        else:
-                            if ships_matrix[square["i"]][square["j"]] != 0:
-                                square["width"] = 0
-                            else:
-                                square["width"] = 2
+            highlight_hovered_square()
 
     elif tab == "player1_move" or tab == "player2_move":
         # Drawing
@@ -463,6 +490,7 @@ while run:
                             if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
                                 if enemy_ships[square["i"]][square["j"]] != 0:
                                     square["width"] = 0
+                                    square["hit"] = True
                                     my_ship_hits[enemy_ships[square["i"]][square["j"]]] += 1
                                     my_hits += 1
                                     destroyed_ship = check_if_destroyed(my_ship_hits)
@@ -495,6 +523,9 @@ while run:
             # Player 2 attacking
             elif tab == "player2_move":
                 tab, p2_hits, p1_hits = player_attack("player2_move", p1_grid, p1_ships, p1_ship_hits, p1_hits, p2_grid, p2_ships, p2_ship_hits, p2_hits)
+            
+            # Highlighting the square that the user is hovering over
+            highlight_hovered_square()
 
             if p1_hits == 20 or p2_hits == 20:
                 # Changing background music
@@ -535,6 +566,13 @@ while run:
             elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 if ("new_game_border_outer" in locals()) and (new_game_border_outer.collidepoint(pg.mouse.get_pos())):
                     # Resetting everything back to default
+
+                    for row in p1_grid:
+                        for square in row:
+                            square["hit"] = False
+                    for row in p2_grid:
+                        for square in row:
+                            square["hit"] = False
 
                     clear_board(grid)
                     clear_board(p1_grid)
