@@ -62,6 +62,7 @@ NEON_GREEN = (57, 255, 20)
 RED = (255, 0, 0)
 
 FPS = 60
+blink_counter = 0
 
 clock = pg.time.Clock()
 run = True
@@ -285,6 +286,7 @@ while run:
         if reset_border not in buttons:
             buttons.append(reset_border)
 
+        # Count of ships of each size (size 4, size 3 and so on)
         ship_count = {4: 0 if ships_placed == 0 else 1,
                       3: 2 if ships_placed >= 3 else ships_placed - 1,
                       2: 3 if ships_placed >= 6 else ships_placed - 3,
@@ -294,17 +296,29 @@ while run:
             if ship_count[key] < 0:
                 ship_count[key] = 0
 
-        ships_placed_texts = [[f"4x1 ships placed: {ship_count[4]} / 1", ship_count[4] == 1],
-                              [f"3x1 ships placed: {ship_count[3]} / 2", ship_count[3] == 2],
-                              [f"2x1 ships placed: {ship_count[2]} / 3", ship_count[2] == 3],
-                              [f"1x1 ships placed: {ship_count[1]} / 4", ship_count[1] == 4]]
+        ships_placed_texts =[{"text": f"4x1 ships placed: {ship_count[4]} / 1", "placed": ship_count[4] == 1, "y": 200},
+                              {"text": f"3x1 ships placed: {ship_count[3]} / 2", "placed": ship_count[3] == 2, "y": 250},
+                              {"text": f"2x1 ships placed: {ship_count[2]} / 3", "placed": ship_count[2] == 3, "y": 300},
+                              {"text": f"1x1 ships placed: {ship_count[1]} / 4", "placed": ship_count[1] == 4, "y": 350}]
         
-        y = 200
-        for i in ships_placed_texts:
-            text = pixeloid(18).render(i[0], True, NEON_GREEN if i[1] else RED)
-            text_center = text.get_rect(center = (1025, y))
+        blinking_arrow = pixeloid(40).render("→", True, RED)
+
+        for obj in ships_placed_texts:
+            text = pixeloid(18).render(obj["text"], True, NEON_GREEN if obj["placed"] else RED)
+            text_center = text.get_rect(center = (1025, obj["y"]))
             WIN.blit(text, text_center)
-            y += 50
+        
+        # Handling the blinking arrow
+        for obj in ships_placed_texts:
+            if not obj["placed"]:
+                if blink_counter < 40:
+                    blinking_arrow_center = blinking_arrow.get_rect(center = (870, obj["y"]))
+                    WIN.blit(blinking_arrow, blinking_arrow_center)
+                blink_counter += 1
+                if blink_counter == 80:
+                    blink_counter = 0
+                break
+
 
         # if the player has placed all 10 ships, display the confirm button
         if ships_placed == 10:
