@@ -478,6 +478,7 @@ while run:
             # Player attacking
             def player_attack(tab, p1_grid, p1_ships, p1_ship_hits, p1_hits, p2_grid, p2_ships, p2_ship_hits, p2_hits):
                 if tab == "player1_move":
+                    # Variables starting with "my" refer to the attacking player, variables starting with "enemy" refer to the defending player
                     my_grid, my_ships, my_ship_hits, my_hits = p1_grid, p1_ships, p1_ship_hits, p1_hits
                     enemy_grid, enemy_ships, enemy_ship_hits, enemy_hits = p2_grid, p2_ships, p2_ship_hits, p2_hits
                 else:
@@ -487,7 +488,7 @@ while run:
                 if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     for row in enemy_grid:
                         for square in row:
-                            if square["rect"].collidepoint(pg.mouse.get_pos()) and square["color"] != RED and square["width"] != 0:
+                            if square["rect"].collidepoint(pg.mouse.get_pos()) and not square["hit"] and square["color"] != RED:
                                 if enemy_ships[square["i"]][square["j"]] != 0:
                                     square["width"] = 0
                                     square["hit"] = True
